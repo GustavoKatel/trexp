@@ -5,7 +5,7 @@ OBJS = regex.o
 CFLAGS = 
 
 all: $(OBJS) main.c
-	$(CC) main.c $(CFLAGS) $(OBJS) -o main
+	$(CC) $(CFLAGS) main.c $(OBJS) -o main
 
 debug: CFLAGS += -g
 debug: all 
