@@ -10,36 +10,21 @@ int main()
 	char *regex_string = "ab(a)+(ab)*";
 	char *word = "abaababab";
 
-	tRegex *regex = process_regex(regex_string);
+	char regex_get_string[255];
+	char word_get_string[255];
 
-	printf("regex: %s\n",regex_string);
-	printf("word: %s\n",word);
-	printf("base: %s\n",regex->base);
-	printf("incond: %d\ncond_count: %d\n",regex->incond, regex->cond_count);
-
-	int i;
-	for(i=0;i<regex->cond_count;i++)
+	while(1)
 	{
-		tCond *cond = regex->cond_list[i];
-		printf("cond #%d:\n",i);
-		printf("\tsimbolos_count: %d\n",cond->simbolos_count);
-		printf("\tsimbolos: %s\n",cond->simbolos);
-		printf("\toperador: %c\n",cond->operador);
-		printf("\tbase_index: %d\n",cond->base_index);
+		printf("Digite a expressao regular: ");
+		fgets(regex_get_string, 255, stdin);
+		printf("Digite a palavra: ");
+		fgets(word_get_string, 255, stdin);
 
+
+		printf("Regex: %s\n", regex_get_string);
+		printf("Word: %s\n", word_get_string);
+		printf("test: %s\n", (check(regex_get_string, word_get_string) ? "Match!" : "Not match!" ) );
 	}
-
-	for(i=0;i<regex->incond;i++)
-		printf("incond #%d start count: %d\n",i,regex->case_list[i]);
-
-	char *try = next_try(regex, strlen(word));
-	if(try)
-	{
-		printf("try: %s - res: ",try);
-		printf("%s\n", (strcmp(try, word)==0 ? "match!" : "doesn't match!" ) );
-		free(try);
-	}
-	regex_destroy(regex);
 
 	return 0;
 }

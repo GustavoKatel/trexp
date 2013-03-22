@@ -66,9 +66,34 @@ tRegex *process_regex(const char *regex_string)
 	return regex;
 }
 
+int total_simb_cond(tRegex *regex)
+{
+	int total_simbolos = 0, i;
+	for(i=0;i<regex->cond_count;i++)
+	{
+		total_simbolos += ( regex->case_list[i]*regex->cond_list[i]->simbolos_count );
+	}
+	return total_simbolos;
+}
+
 void increment_cond(tRegex *regex, int dist)
 {
-	
+	int i=0;
+	while(1)
+	{
+		regex->case_list[i]++;
+		if(total_simb_cond(regex)==dist)
+			break;
+		while(total_simb_cond(regex)>dist)
+		{
+			regex->case_list[i]=( regex->cond_list[i]->operador=='+' ? 1 : 0 );
+			i++;
+			regex->case_list[i]++;	
+			if(i+1>=regex->cond_count)
+				return;
+		}
+		i=0;
+	}	
 }
 
 char *next_try(tRegex *regex, int match_size)
@@ -76,11 +101,7 @@ char *next_try(tRegex *regex, int match_size)
 	int i;
 	int cond_index=0;
 	int dist = match_size - regex->incond;
-	int total_simbolos = 0;
-	for(i=0;i<regex->cond_count;i++)
-	{
-		total_simbolos += ( regex->case_list[i]*regex->cond_list[i]->simbolos_count );
-	}
+	int total_simbolos = total_simb_cond(regex);
 	//
 	char *test = NULL;
 	int size=0;
@@ -99,6 +120,11 @@ char *next_try(tRegex *regex, int match_size)
 	}
 	else
 	{
+		if(total_simbolos<dist)
+		{
+			increment_cond(regex, dist);
+			total_simbolos = total_simb_cond(regex);
+		}
 		test = (char *)malloc(regex->incond+total_simbolos);
 		int test_pos=0, j=0, k=0;
 		for(i=0;i<strlen(regex->base);i++)
@@ -119,12 +145,6 @@ char *next_try(tRegex *regex, int match_size)
 
 	regex->tentativas++;
 	return test;
-}
-
-int check(const char *regex, const char *word)
-{
-
-
 }
 
 void regex_destroy(tRegex *regex)
@@ -149,3 +169,32 @@ void regex_destroy_cond(tCond *cond)
 	free(cond->simbolos);
 	free(cond);
 }
+
+int compare(const char *test, const char *word)
+{
+	int i = 0, res = 1;
+	for(i=0;i<strlen(word);i++)
+	{
+		res = res && (word[i]==test[i] || test[i]=='.');
+	}
+	return res;
+}
+
+int check(const char *regex_string, const char *word)
+{
+	int res = 0;
+	//
+	tRegex *regex = process_regex(regex_string);
+	char *try = next_try(regex, strlen(word));
+	while(try)
+	{
+		res = compare(try, word);
+		free(try);
+		if(res)
+			break;
+		try = next_try(regex, strlen(word));
+	}
+	regex_destroy(regex);
+	return res;
+}
+
