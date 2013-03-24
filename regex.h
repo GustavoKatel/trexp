@@ -12,6 +12,8 @@ typedef struct {
 
 typedef struct {
 
+	char *string;
+	//
 	int incond;
 	int cond_count;
 	tCond **cond_list;

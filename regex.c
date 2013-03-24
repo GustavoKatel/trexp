@@ -7,6 +7,9 @@
 tRegex *process_regex(const char *regex_string)
 {
 	tRegex *regex = malloc(sizeof(tRegex));
+	regex->string = malloc(strlen(regex_string)+1);
+	strcpy(regex->string, regex_string);
+	regex->string[strlen(regex_string)]='\0';
 	regex->incond=0;
 	regex->cond_count=0;
 	regex->cond_list=NULL;
@@ -150,6 +153,8 @@ char *next_try(tRegex *regex, int match_size)
 
 void regex_destroy(tRegex *regex)
 {
+	if(regex->string)
+		free(regex->string);
 	int i;
 	for(i=0;i<regex->cond_count;i++)
 	{

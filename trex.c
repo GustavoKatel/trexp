@@ -9,10 +9,11 @@
 
 //
 tRegex *regex_ptr = NULL;
+void free_regex_ptr();
 //
 
 typedef enum {REGEX, WORD} READING_TYPE;
-enum WIN_PAIRS {log=1, info, info_selected, word, regex};
+enum WIN_PAIRS {log=1, info, info_selected, word, regex, regex_bg};
 
 WINDOW *win_main = NULL;
 
@@ -48,14 +49,14 @@ char read_buff[READ_BUFF_MAX];
 int read_buff_pos=0;
 void read_buff_clear();
 void read_buff_process();
-void process_buff_input();
+void process_buff_word();
 void process_buff_regex();
 
 int main()
 {
 	win_main = initscr();
 	ESCDELAY=0;
-//	use_default_colors();
+	//	use_default_colors();
 	start_color();
 	raw();
 	noecho();
@@ -82,7 +83,7 @@ int main()
 		{
 			if(c==KEY_BACKSPACE)
 			{
-				if(read_buff_pos>3)
+				if(read_buff_pos>0)
 					read_buff_pos--;
 			}else{
 				read_buff[read_buff_pos++]=c;
@@ -94,20 +95,12 @@ int main()
 				if(reading_state)
 					break;
 				//
-				read_buff[read_buff_pos++]='r';
-				read_buff[read_buff_pos++]=':';
-				read_buff[read_buff_pos++]=' ';
-				//
 				reading_type = REGEX;
 				reading_state=1;
 				break;
 			case 'w':
 				if(reading_state)
 					break;
-				//
-				read_buff[read_buff_pos++]='w';
-				read_buff[read_buff_pos++]=':';
-				read_buff[read_buff_pos++]=' ';
 				//
 				reading_type=WORD;
 				reading_state=1;
@@ -137,6 +130,8 @@ int main()
 	destroy_regex_box();
 	destroy_input_box();
 	endwin();
+	//
+	free_regex_ptr();
 	return 0;
 }
 
@@ -144,13 +139,13 @@ void log_init()
 {
 	log_msg("TREX: Try regex.\n");
 	//
-	log_msg("GustavoKatel");
+	log_msg("\tGustavoKatel\n");
 	//
-	log_msg("Farrel");
+	log_msg("\tFarrel\n");
 	//
-	log_msg("CMatchelo");
+	log_msg("\tCMatchelo\n");
 	//
-	log_msg("Sane");
+	log_msg("\tSane\n");
 }
 
 void log_msg(const char *msg)
@@ -180,7 +175,7 @@ void log_clear()
 
 void create_log_box()
 {
-	win_log = subwin(win_main, LINES-2, COLS-2, 0, 0);
+	win_log = subwin(win_main, LINES-2, COLS-50, 0, 0);
 	wrefresh(win_log);
 	//init_pair(info, COLOR_BLACK, COLOR_WHITE);
 	//
@@ -196,6 +191,7 @@ void update_log_box()
 {
 	wclear(win_log);
 	scrollok(win_log, TRUE);
+	wmove(win_log,0,0);
 	if(buff)
 	{
 		int i;
@@ -203,9 +199,8 @@ void update_log_box()
 		{
 			if(!buff[i])
 				continue;
-			wmove(win_log, i,0);
+			//wmove(win_log, i,0);
 			wprintw(win_log, buff[i]);
-			//			printf("printed: %s\n", buff[i]);
 		}
 	}
 	wrefresh(win_log);
@@ -215,8 +210,8 @@ void create_info_box()
 {
 	win_info = subwin(win_main, 1,0, LINES-2, 0);
 	wrefresh(win_info);
-	init_pair(info, COLOR_BLACK, COLOR_WHITE);
-	init_pair(info_selected, COLOR_CYAN, COLOR_WHITE);
+	init_pair(info, COLOR_BLACK, COLOR_CYAN);
+	init_pair(info_selected, COLOR_WHITE, COLOR_CYAN);
 	//
 	update_info_box();
 }
@@ -255,8 +250,11 @@ void update_info_box()
 
 void create_regex_box()
 {
-	win_regex = subwin(win_main, LINES-2,0, 0,LINES-2);
+	win_regex = subwin(win_main, LINES-2,0, 0,COLS-50);
 	wrefresh(win_regex);
+	//
+	init_pair(regex, COLOR_RED, COLOR_BLACK);
+	init_pair(regex_bg, COLOR_WHITE, COLOR_BLACK);
 	//
 	update_regex_box();
 }
@@ -270,11 +268,59 @@ void destroy_regex_box()
 void update_regex_box()
 {
 	wclear(win_regex);
-	wmove(win_regex, 0,0);
+	int line=0;
+	wmove(win_regex, line,0);
 	wprintw(win_regex, "Regex: ");
 	//
-	wmove(win_regex, 0,7);
+	wmove(win_regex, line++,7);
 	wprintw(win_regex, "%d", regex_ptr);
+	//hline
+	wmove(win_regex, line++,0);
+	whline(win_regex, '-', 50);
+	//
+	if(regex_ptr)
+	{	
+		//exp
+		wmove(win_regex,line++,0);
+		wprintw(win_regex, "Expression: %s",regex_ptr->string);
+		//base
+		wmove(win_regex,line++,0);
+		wprintw(win_regex, "Base: %s",regex_ptr->base);
+		//incod
+		wmove(win_regex, line++,0);
+		wprintw(win_regex, "Total inconditionals: %d",regex_ptr->incond);
+		//cond_count
+		wmove(win_regex, line++,0);
+		wprintw(win_regex, "Total conditionals: %d", regex_ptr->cond_count);
+		//cond_list
+		int i;
+		for(i=0;i<regex_ptr->cond_count;i++)
+		{
+			wmove(win_regex,line++,0);
+			wprintw(win_regex,"Contitional #%d",i);
+			//simbolos_count
+			wmove(win_regex,line++,0);
+			wprintw(win_regex,"\tTotal simbols: %d",regex_ptr->cond_list[i]->simbolos_count);
+			//
+			//simbolos
+			wmove(win_regex,line++,0);
+			wprintw(win_regex,"\tSimbols: %s",regex_ptr->cond_list[i]->simbolos);
+			//
+			//operador
+			wmove(win_regex,line++,0);
+			wprintw(win_regex,"\tOperator: %c",regex_ptr->cond_list[i]->operador);
+			//
+			//base_index
+			wmove(win_regex,line++,0);
+			wprintw(win_regex,"\tBase index: %d",regex_ptr->cond_list[i]->base_index);
+			//case_value
+			wmove(win_regex,line++,0);
+			wprintw(win_regex,"\tWeight: %d", regex_ptr->case_list[i]);
+		}
+		wmove(win_regex,line++,0);
+		wprintw(win_regex,"Attempts for the last word: %d",regex_ptr->tentativas);
+
+	}
 	//
 	wrefresh(win_regex);	
 }
@@ -294,9 +340,15 @@ void destroy_input_box()
 void update_input_box()
 {
 	wclear(win_input);
-	read_buff[read_buff_pos]='\0';
-	wmove(win_input,0,0);
-	wprintw(win_input, read_buff);
+	if(reading_state)
+	{
+		wmove(win_input,0,0);
+		wprintw(win_input, (reading_type==WORD) ? "w: " : "r: " );
+		//
+		read_buff[read_buff_pos]='\0';
+		wmove(win_input,0,3);
+		wprintw(win_input, read_buff);
+	}
 	//
 	wrefresh(win_input);
 }
@@ -309,17 +361,46 @@ void read_buff_clear()
 void read_buff_process()
 {
 	if(reading_type==WORD)
-		process_buff_input();
+		process_buff_word();
 	else if(reading_type==REGEX)
 		process_buff_regex();
 }
 
-void process_buff_input()
+void process_buff_word()
 {
-	
+	if(!regex_ptr)
+	{
+		log_clear();
+		log_msg("You must define a regex!\n");
+		return;
+	}
+	log_msg("Checking the word: ");
+	read_buff[read_buff_pos]='\0';
+	log_msg(read_buff);
+	int res = check_re(regex_ptr,read_buff);
+	if(res)
+		log_msg("\tMATCH!\n");
+	else
+		log_msg("\tNOT MATCH!\n");
 }
 
 void process_buff_regex()
 {
+	free_regex_ptr();
+	read_buff[read_buff_pos]='\0';
+	regex_ptr = process_regex(read_buff);
+	log_clear();
+	if(regex_ptr)
+		log_msg("Regex process: Sucess!\n");
+	else
+		log_msg("Regex process: Fail!\n");
+}
 
+void free_regex_ptr()
+{
+	if(regex_ptr)
+	{
+		regex_destroy(regex_ptr);
+		regex_ptr=NULL;
+	}
 }
