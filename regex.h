@@ -41,4 +41,5 @@ extern int compare(const char *test, const char *word);
 
 extern int check(const char *regex_string, const char *word);
 
+extern int check_re(tRegex *regex, const char *word);
 #endif

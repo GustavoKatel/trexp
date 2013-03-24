@@ -55,7 +55,7 @@ tRegex *process_regex(const char *regex_string)
 		base_size++;
 		base_index++;
 	}
-	regex->case_list = malloc(sizeof(int)*regex->incond);
+	regex->case_list = malloc(sizeof(int)*regex->cond_count);
 	for(i=0;i<regex->cond_count;i++)
 	{
 		if(regex->cond_list[i]->operador=='+')
@@ -125,7 +125,7 @@ char *next_try(tRegex *regex, int match_size)
 			increment_cond(regex, dist);
 			total_simbolos = total_simb_cond(regex);
 		}
-		test = (char *)malloc(regex->incond+total_simbolos);
+		test = (char *)malloc(regex->incond+total_simbolos+1);
 		int test_pos=0, j=0, k=0;
 		for(i=0;i<strlen(regex->base);i++)
 		{
@@ -140,6 +140,7 @@ char *next_try(tRegex *regex, int match_size)
 			}else
 				test[test_pos++]=regex->base[i];
 		}
+		test[test_pos]='\0';
 		increment_cond(regex, dist);
 	}
 
@@ -175,7 +176,7 @@ int compare(const char *test, const char *word)
 	int i = 0, res = 1;
 	for(i=0;i<strlen(word);i++)
 	{
-		res = res && (word[i]==test[i] || test[i]=='.');
+		res = res && (test[i]=='.' || word[i]==test[i]);
 	}
 	return res;
 }
@@ -188,6 +189,9 @@ int check(const char *regex_string, const char *word)
 	char *try = next_try(regex, strlen(word));
 	while(try)
 	{
+		//printf("tentativas: %d\n", regex->tentativas);
+		//printf("try: %s\n", try);
+		//
 		res = compare(try, word);
 		free(try);
 		if(res)
@@ -198,3 +202,20 @@ int check(const char *regex_string, const char *word)
 	return res;
 }
 
+int check_re(tRegex *regex, const char *word)
+{
+	int res = 0;
+	char *try = next_try(regex, strlen(word));
+	while(try)
+	{
+		//printf("tentativas: %d\n", regex->tentativas);
+		//printf("try: %s\n", try);
+		//
+		res = compare(try, word);
+		free(try);
+		if(res)
+			break;
+		try = next_try(regex, strlen(word));
+	}
+	return res;
+}
