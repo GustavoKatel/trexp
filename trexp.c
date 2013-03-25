@@ -55,6 +55,14 @@ void read_buff_process();
 void process_buff_word();
 void process_buff_regex();
 
+char buff_word_history[READ_BUFF_MAX][10];
+int buff_word_history_size=0;
+void buff_word_history_add(const char *bword);
+
+char buff_regex_history[READ_BUFF_MAX][10];
+int buff_regex_history_size=0;
+void buff_regex_history_add(const char *bregex);
+
 int main()
 {
 	win_main = initscr();
@@ -79,10 +87,11 @@ int main()
 	//
 	log_init();
 	//
+	int regex_history_p=0, word_history_p=0;
 	int c;
 	while((c=getch())!='q' || reading_state)
 	{
-		if(reading_state && read_buff_pos<READ_BUFF_MAX)
+		if(reading_state && read_buff_pos<READ_BUFF_MAX-1)
 		{
 			if(c==KEY_BACKSPACE)
 			{
@@ -114,9 +123,62 @@ int main()
 				log_clear();
 				log_init();
 				break;
+			case KEY_DOWN:
+				if(!reading_state)
+					break;
+				if(reading_type==WORD)
+				{
+					read_buff_clear();
+					if(word_history_p>=0)
+					{
+						strcpy(read_buff, buff_word_history[word_history_p]);
+						read_buff_pos=strlen(buff_word_history[word_history_p])-1;
+						endwin();
+					}
+					if(word_history_p>=0)
+						word_history_p--;
+					if(word_history_p<0)
+						read_buff_clear();
+				}
+				else if(reading_type==REGEX)
+				{
+					read_buff_clear();
+					if(regex_history_p>=0)
+					{
+						strcpy(read_buff, buff_regex_history[regex_history_p]);
+						read_buff_pos=strlen(buff_regex_history[regex_history_p])-1;
+					}
+					if(regex_history_p>=0)
+						regex_history_p--;
+					if(regex_history_p<0)
+						read_buff_clear();
+				}
+				break;
+			case KEY_UP:
+				if(!reading_state)
+					break;
+				if(reading_type==WORD)
+				{
+					if(word_history_p<buff_word_history_size-1)
+						word_history_p++;
+					read_buff_clear();
+					strcpy(read_buff, buff_word_history[word_history_p]);
+					read_buff_pos=strlen(buff_word_history[word_history_p])-1;
+				}
+				else if(reading_type==REGEX)
+				{
+					if(regex_history_p<buff_regex_history_size-1)
+						regex_history_p++;
+					read_buff_clear();
+					strcpy(read_buff, buff_regex_history[regex_history_p]);
+					read_buff_pos=strlen(buff_regex_history[regex_history_p])-1;
+				}
+				break;
 			case 27:
 				reading_state=0;
 				read_buff_clear();
+				word_history_p=0;
+				regex_history_p=0;
 				break;
 			case '\n':
 			case KEY_ENTER:
@@ -125,6 +187,8 @@ int main()
 					read_buff_process();
 					reading_state=0;
 					read_buff_clear();
+					word_history_p=-1;
+					regex_history_p=-1;
 				}
 				break;
 		}
@@ -146,17 +210,23 @@ int main()
 
 void log_init()
 {
-	log_msg("t-rEXP: Try a Regular Expression.\n");
+	log_msg("t-rEXP: Try a Regular Expression.\n\n");
 	//
-	log_msg("\tGustavoKatel\n");
+	log_msg("\t\tGustavoKatel\n");
 	//
-	log_msg("\tFarrel\n");
+	log_msg("\t\t   Farrel \n");
 	//
-	log_msg("\tCMatchelo\n");
+	log_msg("\t\t  CMatchelo\n");
 	//
-	log_msg("\tSane\n");
+	log_msg("\t\t    Sane\n");
 	//
 	log_msg(TREX_ART);
+	//
+	log_msg("\n\nInstructions:\n");
+	log_msg("Reserved characters for regular expressions: (, ), ., *, +\n");
+	log_msg("Reserved characters for the process: $\n");
+	log_msg("Conditional model in the regular expression: (SIMBOLS)OPERADOR. Example: (abcd)+, (a)*\n");
+	log_msg("The dot (.) can match any character.\n");
 }
 
 void log_msg(const char *msg)
@@ -188,6 +258,7 @@ void create_log_box()
 {
 	win_log = subwin(win_main, LINES-2, COLS-50, 0, 0);
 	wrefresh(win_log);
+	init_pair(log, COLOR_WHITE, -1);
 	init_pair(LOG_ALERT, COLOR_RED, -1);
 	//
 	update_log_box();
@@ -388,10 +459,14 @@ void process_buff_word()
 		log_msg("You must define a regex!\n");
 		return;
 	}
+	//
 	log_msg("Checking the word: ");
 	read_buff[read_buff_pos]='\0';
 	log_msg(read_buff);
-	int res = check_re(regex_ptr,read_buff);
+	//
+	buff_word_history_add(read_buff);
+	//
+	int res = regex_check_re(regex_ptr,read_buff);
 	if(res)
 		log_msg("\tMATCH!\n");
 	else
@@ -402,7 +477,10 @@ void process_buff_regex()
 {
 	free_regex_ptr();
 	read_buff[read_buff_pos]='\0';
-	regex_ptr = process_regex(read_buff);
+	//
+	buff_regex_history_add(read_buff);
+	//
+	regex_ptr = regex_new(read_buff);
 	log_clear();
 	if(regex_ptr)
 		log_msg("Regex process: Sucess!\n");
@@ -418,3 +496,25 @@ void free_regex_ptr()
 		regex_ptr=NULL;
 	}
 }
+
+void buff_word_history_add(const char *bword)
+{
+	int i;
+	for(i=10;i>0;i--)
+		strcpy(buff_word_history[i], buff_word_history[i-1]);
+	strcpy(buff_word_history[0], bword);
+	if(buff_word_history_size<10)
+		buff_word_history_size++;
+}
+
+void buff_regex_history_add(const char *bregex)
+{
+	int i;
+	for(i=10;i>0;i--)
+		strcpy(buff_regex_history[i], buff_regex_history[i-1]);
+	strcpy(buff_regex_history[0], bregex);
+	if(buff_regex_history_size<10)
+		buff_regex_history_size++;
+
+}
+

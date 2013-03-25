@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-tRegex *process_regex(const char *regex_string)
+tRegex *regex_new(const char *regex_string)
 {
 	tRegex *regex = malloc(sizeof(tRegex));
 	regex->string = malloc(strlen(regex_string)+1);
@@ -69,7 +69,7 @@ tRegex *process_regex(const char *regex_string)
 	return regex;
 }
 
-int total_simb_cond(tRegex *regex)
+int regex_total_simb_cond(tRegex *regex)
 {
 	int total_simbolos = 0, i;
 	for(i=0;i<regex->cond_count;i++)
@@ -79,32 +79,32 @@ int total_simb_cond(tRegex *regex)
 	return total_simbolos;
 }
 
-void increment_cond(tRegex *regex, int dist)
+void regex_increment_cond(tRegex *regex, int dist)
 {
 	int i=0;
 	while(1)
 	{
 		regex->case_list[i]++;
-		if(total_simb_cond(regex)==dist)
+		if(regex_total_simb_cond(regex)==dist)
 			break;
-		while(total_simb_cond(regex)>dist)
+		while(regex_total_simb_cond(regex)>dist)
 		{
+			if(i+1>=regex->cond_count)
+				return;
 			regex->case_list[i]=( regex->cond_list[i]->operador=='+' ? 1 : 0 );
 			i++;
 			regex->case_list[i]++;	
-			if(i+1>=regex->cond_count)
-				return;
 		}
 		i=0;
 	}	
 }
 
-char *next_try(tRegex *regex, int match_size)
+char *regex_next_try(tRegex *regex, int match_size)
 {
 	int i;
 	int cond_index=0;
 	int dist = match_size - regex->incond;
-	int total_simbolos = total_simb_cond(regex);
+	int total_simbolos = regex_total_simb_cond(regex);
 	//
 	char *test = NULL;
 	int size=0;
@@ -121,12 +121,16 @@ char *next_try(tRegex *regex, int match_size)
 			strcpy(test,regex->base);
 		}
 	}
+	/*else if(regex->incond<match_size && regex->cond_count>0 && !total_simbolos(regex) )
+	{
+	
+	}*/
 	else
 	{
 		if(total_simbolos<dist)
 		{
-			increment_cond(regex, dist);
-			total_simbolos = total_simb_cond(regex);
+			regex_increment_cond(regex, dist);
+			total_simbolos = regex_total_simb_cond(regex);
 		}
 		test = (char *)malloc(regex->incond+total_simbolos+1);
 		int test_pos=0, j=0, k=0;
@@ -144,7 +148,7 @@ char *next_try(tRegex *regex, int match_size)
 				test[test_pos++]=regex->base[i];
 		}
 		test[test_pos]='\0';
-		increment_cond(regex, dist);
+		regex_increment_cond(regex, dist);
 	}
 
 	regex->tentativas++;
@@ -176,7 +180,17 @@ void regex_destroy_cond(tCond *cond)
 	free(cond);
 }
 
-int compare(const char *test, const char *word)
+void regex_prepare(tRegex *regex)
+{
+	regex->tentativas=0;
+	int i;
+	for(i=0;i<regex->cond_count;i++)
+	{
+		regex->case_list[i] = ( regex->cond_list[i]->operador=='+' ? 1 : 0 );
+	}
+}
+
+int regex_compare(const char *test, const char *word)
 {
 	int i = 0, res = 1;
 	for(i=0;i<strlen(word);i++)
@@ -188,32 +202,34 @@ int compare(const char *test, const char *word)
 	return res;
 }
 
-int check(const char *regex_string, const char *word)
+int regex_check(const char *regex_string, const char *word)
 {
 	int res = 0;
 	//
-	tRegex *regex = process_regex(regex_string);
-	res = check_re(regex, word);
+	tRegex *regex = regex_new(regex_string);
+	res = regex_check_re(regex, word);
 	regex_destroy(regex);
 	return res;
 }
 
-int check_re(tRegex *regex, const char *word)
+int regex_check_re(tRegex *regex, const char *word)
 {
 	int res = 0;
-	regex->tentativas=0;
-	char *try = next_try(regex, strlen(word));
+	regex_prepare(regex);
+	
+	char *try = regex_next_try(regex, strlen(word));
 	while(try)
 	{
 		//printf("tentativas: %d\n", regex->tentativas);
-		//printf("try: %s\n", try);
-		printf("total: %d\n",total_simb_cond(regex));
+		//printf("try: %s (%d ? %d)\n", try, strlen(try), strlen(word));
+		//printf("total: %d\n",regex_total_simb_cond(regex));
 		//
-		res = compare(try, word);
+		res = regex_compare(try, word);
 		free(try);
+		//
 		if(res)
 			break;
-		try = next_try(regex, strlen(word));
+		try = regex_next_try(regex, strlen(word));
 	}
 	return res;
 }

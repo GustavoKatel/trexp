@@ -27,21 +27,23 @@ typedef struct {
 
 
 
-extern tRegex *process_regex(const char *regex_string);
+extern tRegex *regex_new(const char *regex_string);
 
-extern int total_simb_cond(tRegex *regex);
+extern int regex_total_simb_cond(tRegex *regex);
 
-extern void increment_cond(tRegex *regex, int dist);
+extern void regex_increment_cond(tRegex *regex, int dist);
 
-extern char *next_try(tRegex *regex, int match_size);
+extern char *regex_next_try(tRegex *regex, int match_size);
 
 extern void regex_destroy(tRegex *regex);
 
 extern void regex_destroy_cond(tCond *cond);
 
-extern int compare(const char *test, const char *word);
+extern void regex_prepare(tRegex *regex);
 
-extern int check(const char *regex_string, const char *word);
+extern int regex_compare(const char *test, const char *word);
 
-extern int check_re(tRegex *regex, const char *word);
+extern int regex_check(const char *regex_string, const char *word);
+
+extern int regex_check_re(tRegex *regex, const char *word);
 #endif

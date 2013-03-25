@@ -7,10 +7,10 @@
 int main()
 {
 
-	char *regex_string = "ab(a)+(ab)*";
-	char *word = "abaababab";
+	char *regex_string = "abc e (.)*";//"ab(a)+(ab)*";
+	char *word = "abc a asd";//"abaababab";
 
-	tRegex *regex = process_regex(regex_string);
+	tRegex *regex = regex_new(regex_string);
 
 	printf("regex: %s\n",regex_string);
 	printf("word: %s\n",word);
@@ -32,13 +32,14 @@ int main()
 	for(i=0;i<regex->cond_count;i++)
 		printf("cond #%d start count: %d\n",i,regex->case_list[i]);
 
-	char *try = next_try(regex, strlen(word));
+	char *try = regex_next_try(regex, strlen(word));
 	while(try)
 	{
 		printf("try: %s - res: ",try);
-		printf("%s\n", (strcmp(try, word)==0 ? "match!" : "doesn't match!" ) );
+		printf("%s!\n", (regex_compare(try,word) ? "match!" : "doesn't match!" ) );
 		free(try);
-		try = next_try(regex, strlen(word));
+		//exit(1);
+		try = regex_next_try(regex, strlen(word));
 	}
 	regex_destroy(regex);
 

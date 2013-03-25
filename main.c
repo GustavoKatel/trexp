@@ -15,7 +15,7 @@ tRegex *getRegex()
 		LimpaBuffer();
 		printf("Digite a expressao regular: ");
 		fgets(regex_get_string, 255, stdin);
-		regex = process_regex(regex_get_string);
+		regex = regex_new(regex_get_string);
 	}
 
 }
@@ -72,7 +72,7 @@ int main()
 				LimpaBuffer();
 				printf("Digite a cadeia:\n.> ");
 				fgets(word_get_string, 255, stdin);
-				printf("\tCheck: %s\n", (check_re(regex, word_get_string) ? "MATCH!" : "NOT MATCH!" ));
+				printf("\tCheck: %s\n", (regex_check_re(regex, word_get_string) ? "MATCH!" : "NOT MATCH!" ));
 				break;
 			case 3:
 				loop = 0;
