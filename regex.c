@@ -182,6 +182,8 @@ int compare(const char *test, const char *word)
 	for(i=0;i<strlen(word);i++)
 	{
 		res = res && (test[i]=='.' || word[i]==test[i]);
+		if(!res)
+			break;
 	}
 	return res;
 }
@@ -191,18 +193,7 @@ int check(const char *regex_string, const char *word)
 	int res = 0;
 	//
 	tRegex *regex = process_regex(regex_string);
-	char *try = next_try(regex, strlen(word));
-	while(try)
-	{
-		//printf("tentativas: %d\n", regex->tentativas);
-		//printf("try: %s\n", try);
-		//
-		res = compare(try, word);
-		free(try);
-		if(res)
-			break;
-		try = next_try(regex, strlen(word));
-	}
+	res = check_re(regex, word);
 	regex_destroy(regex);
 	return res;
 }
@@ -210,11 +201,13 @@ int check(const char *regex_string, const char *word)
 int check_re(tRegex *regex, const char *word)
 {
 	int res = 0;
+	regex->tentativas=0;
 	char *try = next_try(regex, strlen(word));
 	while(try)
 	{
 		//printf("tentativas: %d\n", regex->tentativas);
 		//printf("try: %s\n", try);
+		printf("total: %d\n",total_simb_cond(regex));
 		//
 		res = compare(try, word);
 		free(try);

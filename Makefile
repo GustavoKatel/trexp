@@ -18,12 +18,12 @@ test: test.c regex.o
 regex.o: regex.c regex.h
 	$(CC) $(CFLAGS) -c regex.c -o regex.o
 
-trex: regex.o trex.c
-	$(CC) $(CFLAGS) trex.c -o trex $(LIBS) $(OBJS)
+trexp: regex.o trexp.c
+	$(CC) $(CFLAGS) trexp.c -o trexp $(LIBS) $(OBJS)
 
-trex/debug: debug trex
+trexp/debug: debug trexp
 
 clean:
 	rm -f *.o
 	rm main
-	rm trex
+	rm trexp
