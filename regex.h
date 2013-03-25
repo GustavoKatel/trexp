@@ -29,6 +29,10 @@ typedef struct {
 
 extern tRegex *regex_new(const char *regex_string);
 
+extern int regex_get_size_max(tRegex *regex);
+
+extern void regex_go_min_operator(tRegex *regex, int cond_index);
+
 extern int regex_total_simb_cond(tRegex *regex);
 
 extern void regex_increment_cond(tRegex *regex, int dist);

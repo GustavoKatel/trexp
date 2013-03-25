@@ -223,9 +223,11 @@ void log_init()
 	log_msg(TREX_ART);
 	//
 	log_msg("\n\nInstructions:\n");
-	log_msg("Reserved characters for regular expressions: (, ), ., *, +\n");
-	log_msg("Reserved characters for the process: $\n");
-	log_msg("Conditional model in the regular expression: (SIMBOLS)OPERADOR. Example: (abcd)+, (a)*\n");
+	log_msg("Reserved characters for regular expressions:\n");
+	log_msg("\t- Structural: ., (, )\n");
+	log_msg("\t- Operators: ? (none or one), + (at least one), * (zero or more)\n");
+	log_msg("\t- Reserved characters for the process: $\n");
+	log_msg("Conditional model in the regular expression: (SIMBOLS)OPERADOR. Example: (abcd)+, (a)*, (.)?\n");
 	log_msg("The dot (.) can match any character.\n");
 }
 

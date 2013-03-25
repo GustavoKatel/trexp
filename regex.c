@@ -61,12 +61,44 @@ tRegex *regex_new(const char *regex_string)
 	regex->case_list = malloc(sizeof(int)*regex->cond_count);
 	for(i=0;i<regex->cond_count;i++)
 	{
-		if(regex->cond_list[i]->operador=='+')
+		/*if(regex->cond_list[i]->operador=='+')
 			regex->case_list[i]=1;
 		else
-			regex->case_list[i]=0;
+			regex->case_list[i]=0;*/
+		regex_go_min_operator(regex, i);
 	}
 	return regex;
+}
+
+int regex_get_size_max(tRegex *regex)
+{
+	int i;
+	int tam = regex->incond;
+	for(i=0;i<regex->cond_count;i++)
+		switch(regex->cond_list[i]->operador)
+		{
+			case '+':
+			case '*':
+				return -1;
+			case '?':
+				tam+=regex->cond_list[i]->simbolos_count;
+		}
+	return tam;
+}
+
+void regex_go_min_operator(tRegex *regex, int cond_index)
+{
+	switch(regex->cond_list[cond_index]->operador)
+	{
+		case '+':
+			regex->case_list[cond_index]=1;
+			break;
+		case '?':
+		case '*':
+		default:
+			regex->case_list[cond_index]=0;
+			break;
+	}
 }
 
 int regex_total_simb_cond(tRegex *regex)
@@ -91,9 +123,20 @@ void regex_increment_cond(tRegex *regex, int dist)
 		{
 			if(i+1>=regex->cond_count)
 				return;
-			regex->case_list[i]=( regex->cond_list[i]->operador=='+' ? 1 : 0 );
+			//regex->case_list[i]=( regex->cond_list[i]->operador=='+' ? 1 : 0 );
+			//TODO return before decrease weight if the last operator is "?"
+			regex_go_min_operator(regex,i);
 			i++;
-			regex->case_list[i]++;	
+			regex->case_list[i]++;
+			if(regex->cond_list[i]->operador=='?')
+			{
+				if(regex->case_list[i]>1)
+				{
+					regex->case_list[i]=0;
+				}
+			}
+			if(regex_total_simb_cond(regex)==dist)
+				return;
 		}
 		i=0;
 	}	
@@ -109,7 +152,7 @@ char *regex_next_try(tRegex *regex, int match_size)
 	char *test = NULL;
 	int size=0;
 	//
-	if(dist < total_simbolos)
+	if(dist < total_simbolos || (regex_get_size_max(regex)>-1 && regex_get_size_max(regex)<match_size) )
 	{
 		test = NULL;
 	}
@@ -186,7 +229,8 @@ void regex_prepare(tRegex *regex)
 	int i;
 	for(i=0;i<regex->cond_count;i++)
 	{
-		regex->case_list[i] = ( regex->cond_list[i]->operador=='+' ? 1 : 0 );
+		//regex->case_list[i] = ( regex->cond_list[i]->operador=='+' ? 1 : 0 );
+		regex_go_min_operator(regex, i);
 	}
 }
 
@@ -221,8 +265,8 @@ int regex_check_re(tRegex *regex, const char *word)
 	while(try)
 	{
 		//printf("tentativas: %d\n", regex->tentativas);
-		//printf("try: %s (%d ? %d)\n", try, strlen(try), strlen(word));
-		//printf("total: %d\n",regex_total_simb_cond(regex));
+		printf("try: %s (%d ? %d)\n", try, strlen(try), strlen(word));
+	//	printf("total: %d\n",regex_total_simb_cond(regex));
 		//
 		res = regex_compare(try, word);
 		free(try);
