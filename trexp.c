@@ -358,7 +358,7 @@ void update_regex_box()
 	wprintw(win_regex, "Regex: ");
 	//
 	wmove(win_regex, line++,7);
-	wprintw(win_regex, "%d", regex_ptr);
+	wprintw(win_regex, "%p", regex_ptr);
 	//hline
 	wmove(win_regex, line++,0);
 	whline(win_regex, '-', 50);
@@ -468,7 +468,11 @@ void process_buff_word()
 	//
 	int res = regex_check_re(regex_ptr,read_buff);
 	if(res)
-		log_msg("\tMATCH!\n");
+	{
+		char msg[255];
+		sprintf(msg,"\tMATCH! After %d attempts.\n",regex_ptr->tentativas);
+		log_msg(msg);
+	}
 	else
 		log_msg("\tNOT MATCH!\n");
 }
