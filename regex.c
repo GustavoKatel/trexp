@@ -18,6 +18,7 @@ tRegex *regex_new(const char *regex_string)
 	//
 	regex->case_list = NULL;
 	regex->tentativas=0;
+	regex->break_point=0;
 	//
 	int i, base_index=0, base_size=1;
 	for(i=0;i<strlen(regex_string);i++)
@@ -132,6 +133,11 @@ void regex_increment_cond(tRegex *regex, int dist)
 			{
 				if(regex->case_list[i]>1)
 				{
+					if(i+1>=regex->cond_count)
+					{
+						regex->break_point=1;
+						return;
+					}
 					regex->case_list[i]=0;
 				}
 			}
@@ -152,7 +158,7 @@ char *regex_next_try(tRegex *regex, int match_size)
 	char *test = NULL;
 	int size=0;
 	//
-	if(dist < total_simbolos || (regex_get_size_max(regex)>-1 && regex_get_size_max(regex)<match_size) )
+	if(dist < total_simbolos || (regex_get_size_max(regex)>-1 && regex_get_size_max(regex)<match_size) || regex->break_point )
 	{
 		test = NULL;
 	}
@@ -232,6 +238,7 @@ void regex_prepare(tRegex *regex)
 		//regex->case_list[i] = ( regex->cond_list[i]->operador=='+' ? 1 : 0 );
 		regex_go_min_operator(regex, i);
 	}
+	regex->break_point=0;
 }
 
 int regex_compare(const char *test, const char *word)

@@ -22,6 +22,8 @@ typedef struct {
 	//
 	int *case_list;
 	int tentativas;
+	//
+	int break_point;
 
 }tRegex;
 
