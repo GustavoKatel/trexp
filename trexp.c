@@ -86,6 +86,7 @@ int main()
 	keypad(win_input,TRUE);
 	//
 	log_init();
+	regex_log_func = log_msg;
 	//
 	int regex_history_p=0, word_history_p=0;
 	int c;

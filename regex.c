@@ -4,6 +4,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+static const char *strip_new_line(char * buff, const char *str)
+{
+	strcpy(buff,str);
+	buff[strlen(buff)-1]='\0';
+	return buff;
+}
+
 tRegex *regex_new(const char *regex_string)
 {
 	tRegex *regex = malloc(sizeof(tRegex));
@@ -62,10 +69,6 @@ tRegex *regex_new(const char *regex_string)
 	regex->case_list = malloc(sizeof(int)*regex->cond_count);
 	for(i=0;i<regex->cond_count;i++)
 	{
-		/*if(regex->cond_list[i]->operador=='+')
-			regex->case_list[i]=1;
-		else
-			regex->case_list[i]=0;*/
 		regex_go_min_operator(regex, i);
 	}
 	return regex;
@@ -112,39 +115,41 @@ int regex_total_simb_cond(tRegex *regex)
 	return total_simbolos;
 }
 
+int regex_increment_case(tRegex *regex, int index)
+{
+	switch(regex->cond_list[index]->operador)
+	{
+		case '+':
+		case '*':
+			regex->case_list[index]++;
+			break;
+		case '?':
+			regex->case_list[index]++;
+			if(regex->case_list[index]>1)
+				return 1;
+			break;
+	}
+	return 0;
+}
+
 void regex_increment_cond(tRegex *regex, int dist)
 {
 	int i=0;
 	while(1)
 	{
-		regex->case_list[i]++;
-		if(regex_total_simb_cond(regex)==dist)
-			break;
-		while(regex_total_simb_cond(regex)>dist)
+		while(regex_increment_case(regex,i) || regex_total_simb_cond(regex)>dist )
 		{
+			regex_go_min_operator(regex, i);
 			if(i+1>=regex->cond_count)
-				return;
-			//regex->case_list[i]=( regex->cond_list[i]->operador=='+' ? 1 : 0 );
-			//TODO return before decrease weight if the last operator is "?"
-			regex_go_min_operator(regex,i);
-			i++;
-			regex->case_list[i]++;
-			if(regex->cond_list[i]->operador=='?')
 			{
-				if(regex->case_list[i]>1)
-				{
-					if(i+1>=regex->cond_count)
-					{
-						regex->break_point=1;
-						return;
-					}
-					regex->case_list[i]=0;
-				}
-			}
-			if(regex_total_simb_cond(regex)==dist)
+				regex->break_point=1;
 				return;
+			}
+			i++;
 		}
 		i=0;
+		if(regex_total_simb_cond(regex)==dist)
+			break;
 	}	
 }
 
@@ -170,10 +175,6 @@ char *regex_next_try(tRegex *regex, int match_size)
 			strcpy(test,regex->base);
 		}
 	}
-	/*else if(regex->incond<match_size && regex->cond_count>0 && !total_simbolos(regex) )
-	{
-	
-	}*/
 	else
 	{
 		if(total_simbolos<dist)
@@ -235,7 +236,6 @@ void regex_prepare(tRegex *regex)
 	int i;
 	for(i=0;i<regex->cond_count;i++)
 	{
-		//regex->case_list[i] = ( regex->cond_list[i]->operador=='+' ? 1 : 0 );
 		regex_go_min_operator(regex, i);
 	}
 	regex->break_point=0;
@@ -268,19 +268,38 @@ int regex_check_re(tRegex *regex, const char *word)
 	int res = 0;
 	regex_prepare(regex);
 	
-	char *try = regex_next_try(regex, strlen(word));
-	while(try)
+	char *try=NULL;
+	while(1)
 	{
+		try = regex_next_try(regex, strlen(word));
+		if(!try)
+			break;
 		//printf("tentativas: %d\n", regex->tentativas);
-		printf("try: %s (%d ? %d)\n", try, strlen(try), strlen(word));
-	//	printf("total: %d\n",regex_total_simb_cond(regex));
+		//printf("try: %s (%d ? %d)\n", try, strlen(try), strlen(word));
+		//printf("total: %d\n",regex_total_simb_cond(regex));
 		//
 		res = regex_compare(try, word);
+		//
+		if(regex_log_func)
+		{
+			char msg[512], buff[512];
+			strip_new_line(buff,try);
+			sprintf(msg,"\tregex_log: trying to match: %s: %s\n", buff, (res ? "MATCH!" : "FAIL!"));
+			regex_log_func(msg);
+		}
+		//
 		free(try);
 		//
 		if(res)
+		{
+			if(regex_log_func)
+			{
+				char msg[512];
+				sprintf(msg,"\tregex_log: Found a match after %d attempt(s). Stopping...\n",regex->tentativas);
+				regex_log_func(msg);
+			}
 			break;
-		try = regex_next_try(regex, strlen(word));
+		}
 	}
 	return res;
 }
