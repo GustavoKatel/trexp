@@ -376,16 +376,16 @@ void update_regex_box()
 		wprintw(win_regex, "Base: %s",regex_ptr->base);
 		//incod
 		wmove(win_regex, line++,0);
-		wprintw(win_regex, "Total inconditionals: %d",regex_ptr->incond);
+		wprintw(win_regex, "Total of unconditional: %d",regex_ptr->incond);
 		//cond_count
 		wmove(win_regex, line++,0);
-		wprintw(win_regex, "Total conditionals: %d", regex_ptr->cond_count);
+		wprintw(win_regex, "Total of conditional: %d", regex_ptr->cond_count);
 		//cond_list
 		int i;
 		for(i=0;i<regex_ptr->cond_count;i++)
 		{
 			wmove(win_regex,line++,0);
-			wprintw(win_regex,"Contitional #%d",i);
+			wprintw(win_regex,"Conditional #%d",i);
 			//simbolos_count
 			wmove(win_regex,line++,0);
 			wprintw(win_regex,"\tTotal simbols: %d",regex_ptr->cond_list[i]->simbolos_count);
