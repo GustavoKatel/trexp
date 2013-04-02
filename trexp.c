@@ -213,7 +213,7 @@ void log_init()
 {
 	log_msg("t-rEXP: Try a Regular Expression.\n\n");
 	//
-	log_msg("\t\tGustavoKatel\n");
+	log_msg("\t\t   Katel\n");
 	//
 	log_msg("\t\t   Farrel \n");
 	//
@@ -228,7 +228,7 @@ void log_init()
 	log_msg("\t- Structural: ., (, )\n");
 	log_msg("\t- Operators: ? (none or one), + (at least one), * (zero or more)\n");
 	log_msg("\t- Reserved characters for the process: $\n");
-	log_msg("Conditional model in the regular expression: (SIMBOLS)OPERADOR. Example: (abcd)+, (a)*, (.)?\n");
+	log_msg("Conditional model in the regular expression: (SYMBOLS)OPERATOR. Example: (abcd)+, (a)*, (.)?\n");
 	log_msg("The dot (.) can match any character.\n");
 }
 
@@ -388,11 +388,11 @@ void update_regex_box()
 			wprintw(win_regex,"Conditional #%d",i);
 			//simbolos_count
 			wmove(win_regex,line++,0);
-			wprintw(win_regex,"\tTotal simbols: %d",regex_ptr->cond_list[i]->simbolos_count);
+			wprintw(win_regex,"\tTotal symbols: %d",regex_ptr->cond_list[i]->simbolos_count);
 			//
 			//simbolos
 			wmove(win_regex,line++,0);
-			wprintw(win_regex,"\tSimbols: %s",regex_ptr->cond_list[i]->simbolos);
+			wprintw(win_regex,"\tSymbols: %s",regex_ptr->cond_list[i]->simbolos);
 			//
 			//operador
 			wmove(win_regex,line++,0);
