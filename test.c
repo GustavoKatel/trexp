@@ -6,8 +6,9 @@
 
 int main()
 {
+	//regex_log_func = printf;
 
-	char *regex_string = "(a)+";// "(http://)?(.)*,com(,br)?";//"ab(a)+(ab)*";
+	char *regex_string = "(a+";// "(http://)?(.)*,com(,br)?";//"ab(a)+(ab)*";
 	char *word = "ab";//"google,com,br,br";//"abaababab";
 
 	tRegex *regex = regex_new(regex_string);

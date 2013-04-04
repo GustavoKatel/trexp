@@ -27,7 +27,7 @@ typedef struct {
 
 }tRegex;
 
-
+extern int regex_is_valid(const char *regex_string);
 
 extern tRegex *regex_new(const char *regex_string);
 

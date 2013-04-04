@@ -10,7 +10,7 @@ tRegex *getRegex()
 {
 	tRegex *regex = NULL;
 	char regex_get_string[255];
-	while(!regex)
+	//while(!regex)
 	{
 		LimpaBuffer();
 		printf("Digite a expressao regular: ");
@@ -42,7 +42,7 @@ int leInt(int min, int max)
 
 int main()
 {
-
+	//regex_log_func = printf;
 	char *regex_string = "ab(a)+(ab)*";
 	char *word = "abaababab";
 

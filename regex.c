@@ -11,8 +11,47 @@ static const char *strip_new_line(char * buff, const char *str)
 	return buff;
 }
 
+int regex_is_valid(const char *regex_string)
+{
+	int i, op=0;
+	for(i=0;i<strlen(regex_string);i++)
+	{
+		if(regex_string[i]=='(')
+		{
+			if(op)
+				return 0;
+			op=1;
+		}
+		else if(regex_string[i]==')')
+		{
+			if(!op)
+				return 0;
+			op=0;
+			if(i+1<strlen(regex_string))
+			{
+				char operator = regex_string[i+1];
+				if(operator!='*' && operator!='+' && operator!='?')
+					return 0;
+			}else
+				return 0;
+		}
+	}
+	if(op)
+		return 0;
+	return 1;
+}
+
 tRegex *regex_new(const char *regex_string)
 {
+	if(!regex_is_valid(regex_string))
+	{
+		if(regex_log_func)
+		{
+			regex_log_func("\tregex_log: Invalid regular expression.\n");
+		}	
+		return NULL;
+	}
+	//
 	tRegex *regex = malloc(sizeof(tRegex));
 	regex->string = malloc(strlen(regex_string)+1);
 	strcpy(regex->string, regex_string);
@@ -258,6 +297,8 @@ int regex_check(const char *regex_string, const char *word)
 	int res = 0;
 	//
 	tRegex *regex = regex_new(regex_string);
+	if(!regex)
+		return 0;
 	res = regex_check_re(regex, word);
 	regex_destroy(regex);
 	return res;
@@ -266,6 +307,8 @@ int regex_check(const char *regex_string, const char *word)
 int regex_check_re(tRegex *regex, const char *word)
 {
 	int res = 0;
+	if(!regex)
+		return 0;
 	regex_prepare(regex);
 	
 	char *try=NULL;

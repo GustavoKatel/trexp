@@ -487,8 +487,8 @@ void process_buff_regex()
 	//
 	buff_regex_history_add(read_buff);
 	//
+	log_msg("\n");
 	regex_ptr = regex_new(read_buff);
-	log_clear();
 	if(regex_ptr)
 		log_msg("Regex process: Sucess!\n");
 	else
